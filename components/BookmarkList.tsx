@@ -25,6 +25,7 @@ export default function BookmarkList() {
         table: "bookmarks",
       },
       (payload) => {
+        console.log("INSERT received in this tab:", payload) // Add this!
         const newBookmark = payload.new as Bookmark
         setBookmarks((prev) => [newBookmark, ...prev])
       }
@@ -37,13 +38,16 @@ export default function BookmarkList() {
         table: "bookmarks",
       },
       (payload) => {
+        console.log("DELETE received in this tab:", payload) // Add this!
         const deletedId = payload.old.id
         setBookmarks((prev) =>
           prev.filter((b) => b.id !== deletedId)
         )
       }
     )
-    .subscribe()
+    .subscribe((status) => {
+      console.log("Subscription status:", status) // Check if it connects
+    })
 
   return () => {
     supabase.removeChannel(channel)

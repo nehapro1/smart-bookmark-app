@@ -32,7 +32,7 @@ export default function BookmarkList() {
           event: "*",
           schema: "public",
           table: "bookmarks",
-          filter: `user_id=eq.${user.id}`,
+         
         },
         (payload) => {
           console.log("Realtime triggered:", payload)

@@ -135,12 +135,13 @@ Moved subscription logic inside an async setup function inside useEffect and ens
 
 3️⃣ Ensuring Privacy with Realtime
 
-To prevent users from receiving other users' events:
+Row Level Security (RLS) is enabled on the bookmarks table.
+Policies ensure users can only SELECT, INSERT, and DELETE their own bookmarks using:
 
-filter: `user_id=eq.${user.id}`
+auth.uid() = user_id
 
 
-This ensures each user listens only to their own bookmarks.
+This guarantees complete data isolation between users.
 
 🧪 How to Run Locally
 

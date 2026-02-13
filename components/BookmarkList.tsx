@@ -21,7 +21,7 @@ export default function BookmarkList() {
 
     if (!user) return
 
-    // Initial fetch
+    
     await fetchBookmarks()
 
     const channel = supabase
@@ -36,6 +36,7 @@ export default function BookmarkList() {
         },
         (payload) => {
           console.log("Realtime triggered:", payload)
+          console.log("EVENT TYPE:", payload.eventType)
           fetchBookmarks()
         }
       )

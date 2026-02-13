@@ -13,21 +13,43 @@ export default function BookmarkList() {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([])
 
   useEffect(() => {
-    fetchBookmarks()
+  fetchBookmarks()
 
-    const channel = supabase
-      .channel("realtime bookmarks")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "bookmarks" },
-        () => fetchBookmarks()
-      )
-      .subscribe()
+  const channel = supabase
+    .channel("bookmarks-channel")
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "bookmarks",
+      },
+      (payload) => {
+        const newBookmark = payload.new as Bookmark
+        setBookmarks((prev) => [newBookmark, ...prev])
+      }
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "DELETE",
+        schema: "public",
+        table: "bookmarks",
+      },
+      (payload) => {
+        const deletedId = payload.old.id
+        setBookmarks((prev) =>
+          prev.filter((b) => b.id !== deletedId)
+        )
+      }
+    )
+    .subscribe()
 
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [])
+  return () => {
+    supabase.removeChannel(channel)
+  }
+}, [])
+
 
   const fetchBookmarks = async () => {
     const { data } = await supabase

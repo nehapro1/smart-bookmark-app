@@ -13,47 +13,42 @@ export default function BookmarkList() {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([])
 
   useEffect(() => {
-  fetchBookmarks()
+    fetchBookmarks()
 
-  const channel = supabase
-    .channel("bookmarks-channel")
-    .on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "bookmarks",
-      },
-      (payload) => {
-        console.log("INSERT received in this tab:", payload) // Add this!
-        const newBookmark = payload.new as Bookmark
-        setBookmarks((prev) => [newBookmark, ...prev])
-      }
-    )
-    .on(
-      "postgres_changes",
-      {
-        event: "DELETE",
-        schema: "public",
-        table: "bookmarks",
-      },
-      (payload) => {
-        console.log("DELETE received in this tab:", payload) // Add this!
-        const deletedId = payload.old.id
-        setBookmarks((prev) =>
-          prev.filter((b) => b.id !== deletedId)
-        )
-      }
-    )
-    .subscribe((status) => {
-      console.log("Subscription status:", status) // Check if it connects
-    })
+    const channel = supabase
+      .channel("bookmarks-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "bookmarks",
+        },
+        (payload) => {
+          console.log("Change received:", payload)
+          
+          if (payload.eventType === "INSERT") {
+            const newBookmark = payload.new as Bookmark
+            setBookmarks((prev) => {
+              // Prevent duplicates
+              if (prev.some(b => b.id === newBookmark.id)) {
+                return prev
+              }
+              return [newBookmark, ...prev]
+            })
+          }
+          
+          if (payload.eventType === "DELETE") {
+            setBookmarks((prev) => prev.filter((b) => b.id !== payload.old.id))
+          }
+        }
+      )
+      .subscribe()
 
-  return () => {
-    supabase.removeChannel(channel)
-  }
-}, [])
-
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
 
   const fetchBookmarks = async () => {
     const { data } = await supabase
